@@ -1,14 +1,18 @@
+import os
+from dotenv import load_dotenv
 from pick import pick
 from jira import JIRA
 
+load_dotenv()
+
 # Jira settings
-JIRA_URL = ''
-JIRA_USERNAME = ''
-API_TOKEN = ''
+JIRA_URL = os.getenv('JIRA_URL')
+JIRA_USERNAME = os.getenv('JIRA_USERNAME')
+API_TOKEN = os.getenv('API_TOKEN')
 
 
 def get_project_key():
-    options = ['PUBSUBJS', 'AUTOSAVE', 'LIBELASTIC', 'SGINT']
+    options = os.getenv('PROJECT_KEYS').split('|')
     option, index = pick(options, 'Escolha o projeto: ')
     return option
 
