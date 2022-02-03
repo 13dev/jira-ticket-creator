@@ -11,6 +11,30 @@ JIRA_USERNAME = os.getenv('JIRA_USERNAME')
 API_TOKEN = os.getenv('API_TOKEN')
 
 
+def get_issue_transactions(issue):
+    transitions = jira.transitions(issue)
+    return [(t['id'], t['name']) for t in transitions]
+
+
+def ask_to_assign_to_self():
+    _, index = pick(['SIM', 'NÃO'], 'Serei o responsavel desta tarefa? ')
+    return index
+
+def ask_issue_status(issue):
+    options = []
+    for t in get_issue_transactions(issue):
+        options.append(t[1])
+
+    option, _ = pick(options, 'Status da tarefa: ')
+
+    index = 0
+    for t in get_issue_transactions(issue):
+        if t[1] == option:
+            index = t[0]
+
+    return option, index
+
+
 def get_project_key():
     options = os.getenv('PROJECT_KEYS').split('|')
     option, index = pick(options, 'Escolha o projeto: ')
@@ -39,8 +63,14 @@ if __name__ == '__main__':
     new_issue = jira.create_issue(fields={
         'project': {'key': issue_project},
         'summary': title,
-        'description': description + '\n [AUTO-GENERATED]',
+        'description': description + '\n **[AUTO-GENERATED]**',
         'issuetype': {'name': issue_key},
     })
+
+    _, status_id = ask_issue_status(new_issue)
+    jira.transition_issue(new_issue.key, status_id)
+
+    if ask_to_assign_to_self() == 0:
+        jira.assign_issue(new_issue.key, os.getenv('JIRA_USERNAME'))
 
     print('Created issue ', new_issue)
